@@ -293,7 +293,7 @@ h1, h2, .hero-name {
 }
 
 .home-right {
-  background-image: url('Images/Profile_Image.png');
+  background-image: url('images/Profile_Image.png');
   background-size: cover;
   background-position: center;
   filter: grayscale(100%);
