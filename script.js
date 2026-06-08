@@ -2,12 +2,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // ------------------------- PROJECT DATA -------------------------
   const projectsData = [
     { 
-      title: "E-Commerce Platform", 
+      title: "Project Management Platform", 
       category: "fullstack", 
       img: "https://images.pexels.com/photos/34577/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=600", 
-      desc: "Full-stack solution with payment integration.",
-      demoLink: "https://fake-demo-link-1.com",
-      githubLink: "https://github.com/fake-repo-1"
+      desc: "lightweight project management tool similar to Trello or Jira where users can create projects, manage tasks, assign priorities, track progress, and collaborate.",
+      demoLink: "project-manager-seven-topaz.vercel.app",
+      githubLink: "https://github.com/sujalvk888/ProjectManager.git"
     },
     { 
       title: "Task Management App", 
