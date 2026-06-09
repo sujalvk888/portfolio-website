@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
       category: "fullstack", 
       img: "https://images.pexels.com/photos/34577/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=600", 
       desc: "lightweight project management tool similar to Trello or Jira where users can create projects, manage tasks, assign priorities, track progress, and collaborate.",
-      demoLink: "https://project-manager-progress.vercel.app",
+      demoLink: "https://project-manager-progress.vercel.app/",
       githubLink: "https://github.com/sujalvk888/ProjectManager.git"
     },
     { 
