@@ -52,6 +52,17 @@ h1, h2, .hero-name {
   z-index: 10;
 }
 
+.sidebar-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.mobile-brand, .mobile-menu-btn {
+  display: none !important;
+}
+
 .portrait-thumb {
   width: 190px;
   height: 190px;
@@ -861,29 +872,101 @@ footer {
   .app-grid { grid-template-columns: 1fr; }
   
   .left-sidebar {
-    position: relative;
+    position: sticky;
+    top: 0;
     height: auto;
     flex-direction: column;
-    align-items: center;
-    padding: 1.8rem 1.5rem;
+    align-items: stretch;
+    padding: 0.75rem 1.25rem;
     width: 100%;
-    z-index: 100;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
   }
-  
+
+  .sidebar-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
   .portrait-thumb { 
-    margin-bottom: 1rem; 
-    width: 100px; 
-    height: 100px; 
+    margin-bottom: 0;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
+    border-width: 2px;
+    flex-shrink: 0;
   }
-  
-  .nav-links { 
-    flex-direction: row; 
-    flex-wrap: wrap; 
-    gap: 1rem 1.5rem; 
-    margin-top: 0.5rem; 
-    justify-content: center; 
+
+  .mobile-brand {
+    display: block !important;
+    font-weight: 800;
+    font-size: 1.15rem;
+    color: #000;
+    letter-spacing: 0.5px;
+    margin-left: 0.8rem;
+    flex: 1;
+  }
+
+  .mobile-menu-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.1);
+    color: #000;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: background 0.25s ease;
+  }
+
+  .mobile-menu-btn:hover, .mobile-menu-btn:active {
+    background: rgba(0,0,0,0.2);
+  }
+
+  .nav-links {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0,0,0,0.15);
+  }
+
+  .left-sidebar.mobile-open .nav-links {
+    display: flex;
+  }
+
+  .nav-links li {
+    width: 100%;
+  }
+
+  .nav-links li a {
+    display: block;
+    width: 100%;
+    padding: 0.85rem 1.2rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #000;
+    text-align: left;
+    background: rgba(255,255,255,0.35);
+    transition: all 0.25s ease;
+  }
+
+  .nav-links li a:hover, .nav-links li a.active {
+    background: #000;
+    color: var(--primary);
+  }
+
+  .nav-links li a::after {
+    display: none;
   }
   
   .right-rail {
@@ -899,16 +982,21 @@ footer {
   }
   
   .home-split { grid-template-columns: 1fr; min-height: auto; }
-  .home-right { height: 380px; background-position: top center; }
+  .home-right {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1023 / 1537;
+    max-height: 460px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    margin: 0 auto;
+  }
   .contact-wrapper { grid-template-columns: 1fr; gap: 2.5rem; }
   .main-content { padding: 2rem 1.5rem; }
 }
 
 @media (max-width: 768px) {
-  .left-sidebar { padding: 1.5rem 1rem; }
-  .nav-links { gap: 0.8rem 1.2rem; }
-  .nav-links li a { font-size: 0.85rem; }
-  
   .main-content { padding: 1.5rem 1rem; }
   .home-left { padding: 2.5rem 1.8rem; }
   .hero-name { font-size: 3.2rem; }
@@ -942,11 +1030,6 @@ footer {
 }
 
 @media (max-width: 480px) {
-  .left-sidebar { padding: 1.2rem 0.8rem; }
-  .portrait-thumb { width: 80px; height: 80px; margin-bottom: 0.8rem; border-width: 3px; }
-  .nav-links { gap: 0.6rem 0.8rem; }
-  .nav-links li a { font-size: 0.75rem; letter-spacing: 0.5px; }
-  
   .main-content { padding: 1rem 0.8rem 2.5rem 0.8rem; }
   .section-card { margin-bottom: 2rem; border-radius: 22px; }
   .card-inner { padding: 1.6rem 1.1rem; }
@@ -958,7 +1041,7 @@ footer {
   .hero-name { font-size: 2.3rem; line-height: 1.15; }
   .hero-tag { font-size: 0.75rem; padding: 0.45rem 1rem; margin: 0.8rem 0 1.2rem; max-width: 100%; white-space: normal; line-height: 1.4; }
   .home-desc { font-size: 0.92rem; max-width: 100%; margin-bottom: 1.8rem; }
-  .home-right { height: 260px; }
+  .home-right { max-height: 380px; }
   
   .about-action-btns { flex-direction: column; align-items: stretch; gap: 1rem; }
   .about-action-btns .btn-yellow,
@@ -988,6 +1071,4 @@ footer {
   .skills-grid { grid-template-columns: 1fr; }
   .hero-name { font-size: 1.9rem; }
   .dashed-title h2 { font-size: 1.15rem; padding: 0.3rem 0.6rem; }
-  .nav-links { gap: 0.5rem 0.6rem; }
-  .nav-links li a { font-size: 0.7rem; }
 }

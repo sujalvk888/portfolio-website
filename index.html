@@ -46,11 +46,17 @@
 </head>
 <body>
 <div class="app-grid">
-  <aside class="left-sidebar">
-    <div class="portrait-thumb">
-      <img src="images/Profile_Image2.png" alt="Sujal Portrait">
+  <aside class="left-sidebar" id="leftSidebar">
+    <div class="sidebar-header">
+      <div class="portrait-thumb">
+        <img src="images/Profile_Image2.png" alt="Sujal Portrait">
+      </div>
+      <div class="mobile-brand">Sujal V Kanchan</div>
+      <button id="mobileMenuBtn" class="mobile-menu-btn" aria-label="Toggle Navigation Menu">
+        <i class="fas fa-bars"></i>
+      </button>
     </div>
-    <ul class="nav-links">
+    <ul class="nav-links" id="navLinks">
       <li><a href="#home" class="nav-link active">HOME</a></li>
       <li><a href="#about" class="nav-link">ABOUT ME</a></li>
       <li><a href="#skills" class="nav-link">SKILLS & EDUCATION</a></li>

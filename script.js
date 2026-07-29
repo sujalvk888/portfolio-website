@@ -214,6 +214,52 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // ---------- MOBILE NAVIGATION MENU TOGGLE ----------
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const leftSidebar = document.querySelector('.left-sidebar');
+  if (mobileMenuBtn && leftSidebar) {
+    mobileMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      leftSidebar.classList.toggle('mobile-open');
+      const icon = mobileMenuBtn.querySelector('i');
+      if (icon) {
+        if (leftSidebar.classList.contains('mobile-open')) {
+          icon.classList.remove('fa-bars');
+          icon.classList.add('fa-times');
+        } else {
+          icon.classList.remove('fa-times');
+          icon.classList.add('fa-bars');
+        }
+      }
+    });
+
+    // Close mobile menu when clicking any nav link
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (leftSidebar.classList.contains('mobile-open')) {
+          leftSidebar.classList.remove('mobile-open');
+          const icon = mobileMenuBtn.querySelector('i');
+          if (icon) {
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+          }
+        }
+      });
+    });
+
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (leftSidebar.classList.contains('mobile-open') && !leftSidebar.contains(e.target)) {
+        leftSidebar.classList.remove('mobile-open');
+        const icon = mobileMenuBtn.querySelector('i');
+        if (icon) {
+          icon.classList.remove('fa-times');
+          icon.classList.add('fa-bars');
+        }
+      }
+    });
+  }
+
   // ---------- CONTACT FORM ----------
   const contactForm = document.getElementById('contactForm');
   if (contactForm) {
