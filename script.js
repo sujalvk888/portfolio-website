@@ -2,36 +2,36 @@ document.addEventListener("DOMContentLoaded", () => {
   // ------------------------- PROJECT DATA -------------------------
   const projectsData = [
     { 
-      title: "Project Management Platform", 
+      title: "FinVise AI", 
+      category: "fullstack", 
+      img: "https://images.pexels.com/photos/6801874/pexels-photo-6801874.jpeg?auto=compress&cs=tinysrgb&w=600", 
+      desc: "AI-powered financial analysis platform providing real-time stock insights, intelligent market analysis, interactive visualisations, and AI-generated company summaries.",
+      demoLink: "https://finvise-ai-one.vercel.app",
+      githubLink: "https://github.com/sujalvk888/finvise-ai"
+    },
+    { 
+      title: "Project Flow", 
       category: "fullstack", 
       img: "https://images.pexels.com/photos/34577/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=600", 
-      desc: "lightweight project management tool similar to Trello or Jira where users can create projects, manage tasks, assign priorities, track progress, and collaborate.",
-      demoLink: "https://project-manager-progress.vercel.app/",
-      githubLink: "https://github.com/sujalvk888/ProjectManager.git"
+      desc: "Modern project management platform with task boards, collaboration, authentication, project organisation, and progress tracking.",
+      demoLink: "https://project-manager-progress.vercel.app",
+      githubLink: "https://github.com/sujalvk888/project-manager-app"
     },
     { 
-      title: "Task Management App", 
+      title: "Smart Budget Tracker", 
       category: "fullstack", 
-      img: "https://images.pexels.com/photos/1181271/pexels-photo-1181271.jpeg?auto=compress&cs=tinysrgb&w=600", 
-      desc: "React & Firebase powered Kanban board.",
-      demoLink: "https://fake-demo-link-2.com",
-      githubLink: "https://github.com/fake-repo-2"
+      img: "https://images.pexels.com/photos/4386431/pexels-photo-4386431.jpeg?auto=compress&cs=tinysrgb&w=600", 
+      desc: "Personal finance management application with budgeting, expense tracking, analytics dashboards, and financial insights.",
+      demoLink: "https://smart-budget-tracker-for-money-control.vercel.app",
+      githubLink: "https://github.com/sujalvk888/smart-budget-tracker"
     },
     { 
-      title: "Voice-enabled B2B Platform", 
+      title: "DocScope AI", 
       category: "backend", 
-      img: "https://images.pexels.com/photos/546819/pexels-photo-546819.jpeg?auto=compress&cs=tinysrgb&w=600", 
-      desc: "Python NLP & MongoDB Backend.",
-      demoLink: "https://fake-demo-link-3.com",
-      githubLink: "https://github.com/fake-repo-3"
-    },
-    { 
-      title: "Portfolio Website", 
-      category: "frontend", 
-      img: "https://images.pexels.com/photos/326503/pexels-photo-326503.jpeg?auto=compress&cs=tinysrgb&w=600", 
-      desc: "HTML, CSS, JavaScript Responsive UI.",
-      demoLink: "https://fake-demo-link-4.com",
-      githubLink: "https://github.com/fake-repo-4"
+      img: "https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?auto=compress&cs=tinysrgb&w=600", 
+      desc: "AI-powered document assistant enabling intelligent document interaction, secure authentication, and productivity-focused workflows.",
+      demoLink: "https://infi-docs-ai.vercel.app",
+      githubLink: "https://github.com/sujalvk888/infidocs-ai"
     }
   ];
 
@@ -46,8 +46,8 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="project-img-wrapper">
             <img src="${proj.img}" alt="${proj.title}" loading="lazy">
             <div class="project-overlay">
-                <a href="${proj.demoLink}" target="_blank" class="overlay-btn demo-btn" onclick="event.stopPropagation()">Demo</a>
-                <a href="${proj.githubLink}" target="_blank" class="overlay-btn github-btn" onclick="event.stopPropagation()"><i class="fab fa-github"></i> GitHub</a>
+                <a href="${proj.demoLink}" target="_blank" rel="noopener noreferrer" class="overlay-btn demo-btn" onclick="event.stopPropagation()">Demo</a>
+                <a href="${proj.githubLink}" target="_blank" rel="noopener noreferrer" class="overlay-btn github-btn" onclick="event.stopPropagation()"><i class="fab fa-github"></i> GitHub</a>
             </div>
         </div>
         <div class="project-info">
@@ -132,11 +132,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------- CERTIFICATE CAROUSEL (Horizontal Motion) ----------
   const certificatesData = [
-    { title: "AWS Certified Solutions Architect", org: "Amazon Web Services", imgPath: "Certificates/Certificate 1.png", redirectUrl: "https://drive.google.com/file/d/1Gf_a5_4-6yWdNpPFhkFjM5TSLwnmlWiZ/view?usp=drivesdk" },
-    { title: "Advanced React Patterns", org: "Frontend Masters", imgPath: "Certificates/Certificate 2.png", redirectUrl: "https://drive.google.com/file/d/1Ko43qLJEJ3uVzctqbRGJUVA6ku6D5W_O/view?usp=drivesdk" },
-    { title: "Python for Data Science", org: "Coursera", imgPath: "Certificates/Certificate 3.png", redirectUrl: "https://drive.google.com/file/d/1EjatPBEHc9wAT5l5jwlj-jg8lKZDi-Zu/view?usp=drivesdk" },
-    { title: "Advanced React Patterns", org: "Frontend Masters", imgPath: "Certificates/Certificate 4.png", redirectUrl: "https://drive.google.com/file/d/1HAGiQIB1oOsn-Lzbyua_i_qzJ8nvc4bh/view?usp=drivesdk" },
-    { title: "Advanced React Patterns", org: "Frontend Masters", imgPath: "Certificates/Certificate 5.png", redirectUrl: "https://drive.google.com/file/d/1BVXpoM_MxFhWzUZ72Am5vymT9z8qj0Oc/view?usp=drivesdk" }
+    { title: "No-code Machine Learning and Generative AI on AWS (2026)", org: "Amazon Web Services (AWS)", imgPath: "Certificates/Certificate 5.png", redirectUrl: "https://drive.google.com/file/d/1BVXpoM_MxFhWzUZ72Am5vymT9z8qj0Oc/view?usp=drivesdk" },
+    { title: "AI for Students: Build Your Own Generative AI Model (2025)", org: "NxtWave", imgPath: "Certificates/Certificate 3.png", redirectUrl: "https://drive.google.com/file/d/1EjatPBEHc9wAT5l5jwlj-jg8lKZDi-Zu/view?usp=drivesdk" },
+    { title: "Introduction to MongoDB (For Students)", org: "MongoDB", imgPath: "Certificates/Certificate 2.png", redirectUrl: "https://drive.google.com/file/d/1Ko43qLJEJ3uVzctqbRGJUVA6ku6D5W_O/view?usp=drivesdk" },
+    { title: "Introduction to SQL", org: "Simplilearn SkillUp", imgPath: "Certificates/Certificate 1.png", redirectUrl: "https://drive.google.com/file/d/1Gf_a5_4-6yWdNpPFhkFjM5TSLwnmlWiZ/view?usp=drivesdk" },
+    { title: "Git Training", org: "Spoken Tutorial (IIT Bombay)", imgPath: "Certificates/Certificate 4.png", redirectUrl: "https://drive.google.com/file/d/1HAGiQIB1oOsn-Lzbyua_i_qzJ8nvc4bh/view?usp=drivesdk" }
   ];
   
   let currentCertIndex = 0;
