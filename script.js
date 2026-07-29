@@ -258,6 +258,26 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     });
+
+    // ---------- MOBILE COMPACT SCROLL BEHAVIOR ----------
+    const homeSection = document.getElementById('home');
+    function handleMobileNavScroll() {
+      if (!homeSection || !leftSidebar) return;
+      if (window.innerWidth <= 992) {
+        const threshold = (homeSection.offsetTop + homeSection.offsetHeight) - 100;
+        if (window.scrollY > threshold) {
+          leftSidebar.classList.add('scrolled-compact');
+        } else {
+          leftSidebar.classList.remove('scrolled-compact');
+        }
+      } else {
+        leftSidebar.classList.remove('scrolled-compact');
+      }
+    }
+
+    window.addEventListener('scroll', handleMobileNavScroll, { passive: true });
+    window.addEventListener('resize', handleMobileNavScroll);
+    handleMobileNavScroll();
   }
 
   // ---------- CONTACT FORM ----------
