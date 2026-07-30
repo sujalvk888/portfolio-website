@@ -4,7 +4,7 @@
 
 ### AI Specialist & Full Stack Developer
 
-[![Live Demo](https://img.shields.io/badge/🌐%20Live%20Demo-sujalvk.vercel.app-black?style=for-the-badge&logo=vercel&logoColor=white)](https://sujalvk.vercel.app)
+[![Live Demo](https://img.shields.io/badge/🌐%20Live%20Demo-sujal-portfolio-sigmaverse.vercel.app-black?style=for-the-badge&logo=vercel&logoColor=white)](https://sujal-portfolio-sigmaverse.vercel.app)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/sujal-v-kanchan)
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/sujalvk888)
 [![Email](https://img.shields.io/badge/Gmail-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:sujal.vk888@gmail.com)
@@ -19,7 +19,7 @@
 
 ## ✨ Live Preview
 
-> **🔗 [https://sujalvk.vercel.app](https://sujalvk.vercel.app)**
+> **🔗 [https://sujalvk.vercel.app](https://sujal-portfolio-sigmaverse.vercel.app)**
 
 ---
 
