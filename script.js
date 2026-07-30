@@ -441,31 +441,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return words.length >= 3 && new Set(words).size === 1;
     }
 
-    // Helper: Intelligent Low-Quality & Meaningless Content Detection
-    function isLowQualityContent(text) {
-      if (!text || typeof text !== 'string') return true;
-      const trimmed = text.trim();
-      if (!trimmed) return true;
-
-      // 1. Check keyboard patterns
-      if (isKeyboardPattern(trimmed)) return true;
-      // 2. Check repeated characters
-      if (hasRepeatedCharacters(trimmed)) return true;
-      // 3. Check repeated words
-      if (hasRepeatedWords(trimmed)) return true;
-      // 4. Check only numbers
-      if (/^\d+$/.test(trimmed)) return true;
-      // 5. Check only symbols/punctuation
-      if (/^[^\w\s]+$/.test(trimmed)) return true;
-      // 6. Check only emojis
-      if (/^(\p{Extended_Pictographic}|\s)+$/u.test(trimmed)) return true;
-      // 7. Check low alphabetic letter count
-      const distinctLetters = new Set(trimmed.toLowerCase().replace(/[^a-z]/g, '')).size;
-      if (distinctLetters < 3) return true;
-
-      return false;
-    }
-
     // Cooldown Timer for Spam Prevention
     const COOLDOWN_SECONDS = 45;
     const LAST_SUBMIT_KEY = 'EMAILJS_LAST_SUBMIT_TIME';
@@ -481,7 +456,7 @@ document.addEventListener("DOMContentLoaded", () => {
       sessionStorage.setItem(LAST_SUBMIT_KEY, Date.now().toString());
     }
 
-    // Helper to set field error
+    // Helper to set or clear a field's error state
     function setFieldError(inputEl, errorId, errorText) {
       if (!inputEl) return;
       const errorEl = document.getElementById(errorId);
@@ -496,34 +471,31 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Real-time validation clearing on input
+    // Real-time: re-validate while the user corrects a field already marked invalid
     const fields = [
-      { input: nameInput, errId: 'nameError' },
-      { input: emailInput, errId: 'emailError' },
+      { input: nameInput,    errId: 'nameError' },
+      { input: emailInput,   errId: 'emailError' },
       { input: subjectInput, errId: 'subjectError' },
       { input: messageInput, errId: 'messageError' }
     ];
 
     fields.forEach(({ input, errId }) => {
-      if (input) {
-        input.addEventListener('input', () => {
-          if (input.classList.contains('input-error')) {
-            validateField(input, errId);
-          }
-        });
-        input.addEventListener('blur', () => {
-          validateField(input, errId);
-        });
-      }
+      if (!input) return;
+      input.addEventListener('input', () => {
+        if (input.classList.contains('input-error')) validateField(input, errId);
+      });
+      input.addEventListener('blur', () => validateField(input, errId));
     });
 
+    // Lightweight, explicit validation — no semantic/AI checks
     function validateField(inputEl, errorId) {
       if (!inputEl) return false;
-      // Clean leading/trailing and multiple consecutive spaces for validation
+      // Normalise: trim edges + collapse internal whitespace
       const val = inputEl.value.trim().replace(/\s+/g, ' ');
-      const nameAttr = inputEl.getAttribute('name');
+      const attr = inputEl.getAttribute('name');
 
-      if (nameAttr === 'name') {
+      // ── NAME ────────────────────────────────────────────────────────────
+      if (attr === 'name') {
         if (!val || val.length < 2) {
           setFieldError(inputEl, errorId, 'Please enter your full name.');
           return false;
@@ -537,7 +509,7 @@ document.addEventListener("DOMContentLoaded", () => {
           return false;
         }
         if (!/^[a-zA-Z\s\-']+$/.test(val)) {
-          setFieldError(inputEl, errorId, 'Name cannot contain numbers or special characters.');
+          setFieldError(inputEl, errorId, 'Name can only contain letters, spaces, hyphens, and apostrophes.');
           return false;
         }
         if (isKeyboardPattern(val) || hasRepeatedCharacters(val)) {
@@ -548,13 +520,13 @@ document.addEventListener("DOMContentLoaded", () => {
         return true;
       }
 
-      if (nameAttr === 'email') {
+      // ── EMAIL ───────────────────────────────────────────────────────────
+      if (attr === 'email') {
         if (!val) {
           setFieldError(inputEl, errorId, 'Please enter your email address.');
           return false;
         }
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(val)) {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
           setFieldError(inputEl, errorId, 'Please enter a valid email address.');
           return false;
         }
@@ -562,50 +534,52 @@ document.addEventListener("DOMContentLoaded", () => {
         return true;
       }
 
-      if (nameAttr === 'subject') {
+      // ── SUBJECT ─────────────────────────────────────────────────────────
+      if (attr === 'subject') {
         if (!val || val.length < 5) {
-          setFieldError(inputEl, errorId, 'Please enter a valid subject.');
+          setFieldError(inputEl, errorId, 'Subject must be at least 5 characters.');
           return false;
         }
         if (val.length > 100) {
           setFieldError(inputEl, errorId, 'Subject cannot exceed 100 characters.');
           return false;
         }
-        if (/^\d+$/.test(val) || /^[^\w\s]+$/.test(val)) {
-          setFieldError(inputEl, errorId, 'Please enter a valid subject.');
+        if (/^\d+$/.test(val)) {
+          setFieldError(inputEl, errorId, 'Subject cannot contain only numbers.');
+          return false;
+        }
+        if (/^[^\w\s]+$/.test(val)) {
+          setFieldError(inputEl, errorId, 'Subject cannot contain only symbols.');
           return false;
         }
         if (isKeyboardPattern(val) || hasRepeatedCharacters(val) || hasRepeatedWords(val)) {
           setFieldError(inputEl, errorId, 'Please avoid random or repeated characters.');
-          return false;
-        }
-        if (isLowQualityContent(val)) {
-          setFieldError(inputEl, errorId, 'Please enter a valid subject.');
           return false;
         }
         setFieldError(inputEl, errorId, '');
         return true;
       }
 
-      if (nameAttr === 'message') {
+      // ── MESSAGE ─────────────────────────────────────────────────────────
+      if (attr === 'message') {
         if (!val || val.length < 20) {
-          setFieldError(inputEl, errorId, 'Message must be at least 20 meaningful characters.');
+          setFieldError(inputEl, errorId, 'Message must be at least 20 characters.');
           return false;
         }
         if (val.length > 1000) {
           setFieldError(inputEl, errorId, 'Message cannot exceed 1000 characters.');
           return false;
         }
-        if (/^\d+$/.test(val) || /^[^\w\s]+$/.test(val) || /^(\p{Extended_Pictographic}|\s)+$/u.test(val)) {
-          setFieldError(inputEl, errorId, 'Message must contain at least 20 meaningful characters.');
+        if (/^\d+$/.test(val)) {
+          setFieldError(inputEl, errorId, 'Message cannot contain only numbers.');
+          return false;
+        }
+        if (/^[^\w\s]+$/.test(val)) {
+          setFieldError(inputEl, errorId, 'Message cannot contain only symbols.');
           return false;
         }
         if (isKeyboardPattern(val) || hasRepeatedCharacters(val) || hasRepeatedWords(val)) {
           setFieldError(inputEl, errorId, 'Please avoid random or repeated characters.');
-          return false;
-        }
-        if (isLowQualityContent(val)) {
-          setFieldError(inputEl, errorId, 'Message must contain at least 20 meaningful characters.');
           return false;
         }
         setFieldError(inputEl, errorId, '');
