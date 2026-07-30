@@ -280,13 +280,402 @@ document.addEventListener("DOMContentLoaded", () => {
     handleMobileNavScroll();
   }
 
-  // ---------- CONTACT FORM ----------
+  // ---------- EMAILJS ENVIRONMENT CONFIGURATION ----------
+  // Credentials are loaded dynamically from environment variables or Vercel Serverless API (/api/config)
+  async function getEmailJSConfig() {
+    // 1. Check window.ENV (for local dev via optional gitignored env.js)
+    if (typeof window !== 'undefined' && window.ENV && window.ENV.EMAILJS_PUBLIC_KEY) {
+      return {
+        PUBLIC_KEY: window.ENV.EMAILJS_PUBLIC_KEY,
+        SERVICE_ID: window.ENV.EMAILJS_SERVICE_ID,
+        TEMPLATE_ID: window.ENV.EMAILJS_TEMPLATE_ID
+      };
+    }
+
+    // 2. Check process.env / import.meta.env (if bundled or build-injected)
+    if (typeof process !== 'undefined' && process.env && (process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY)) {
+      return {
+        PUBLIC_KEY: process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY,
+        SERVICE_ID: process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID,
+        TEMPLATE_ID: process.env.EMAILJS_TEMPLATE_ID || process.env.VITE_EMAILJS_TEMPLATE_ID
+      };
+    }
+
+    // 3. Try fetching from Vercel Serverless API endpoint (/api/config)
+    try {
+      const res = await fetch('/api/config');
+      if (res.ok) {
+        const config = await res.json();
+        if (config && config.PUBLIC_KEY) {
+          return config;
+        }
+      }
+    } catch (err) {
+      // Silently fallback if /api/config is not available locally
+    }
+
+    return {
+      PUBLIC_KEY: '',
+      SERVICE_ID: '',
+      TEMPLATE_ID: ''
+    };
+  }
+
+  // Pre-initialize EmailJS if public key is available immediately
+  if (typeof emailjs !== 'undefined') {
+    getEmailJSConfig().then((config) => {
+      if (config.PUBLIC_KEY) {
+        try {
+          emailjs.init({ publicKey: config.PUBLIC_KEY });
+        } catch (e) {
+          console.warn('EmailJS SDK initialization check:', e);
+        }
+      }
+    });
+  }
+
+  // ---------- TOAST NOTIFICATION SYSTEM ----------
+  function showToast(message, type = 'success') {
+    const toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast-notification toast-${type}`;
+    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+    toast.setAttribute('aria-live', 'polite');
+
+    const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+    const titleText = type === 'success' ? 'Success!' : 'Notice';
+
+    toast.innerHTML = `
+      <i class="fas ${iconClass} toast-icon" aria-hidden="true"></i>
+      <div class="toast-content">
+        <div class="toast-title">${titleText}</div>
+        <div class="toast-message">${message}</div>
+      </div>
+      <button type="button" class="toast-close" aria-label="Close notification">&times;</button>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    // Force reflow for animation
+    requestAnimationFrame(() => {
+      toast.classList.add('show');
+    });
+
+    const closeBtn = toast.querySelector('.toast-close');
+    const dismiss = () => {
+      toast.classList.remove('show');
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 400);
+    };
+
+    closeBtn.addEventListener('click', dismiss);
+    setTimeout(dismiss, 6000);
+  }
+
+  // ---------- CONTACT FORM VALIDATION & EMAILJS INTEGRATION ----------
   const contactForm = document.getElementById('contactForm');
   if (contactForm) {
-      contactForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        alert('✨ Thanks for reaching out! Your message has been sent successfully.');
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    const subjectInput = document.getElementById('subject');
+    const messageInput = document.getElementById('message');
+    const botCheckInput = document.getElementById('botCheck');
+    const submitBtn = document.getElementById('submitBtn');
+
+    let isSubmitting = false;
+
+    // Helper: Sanitize input to prevent HTML/JS injection and unexpected formatting
+    function sanitizeInput(text) {
+      if (!text || typeof text !== 'string') return '';
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;')
+        .replace(/\//g, '&#x2F;')
+        .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '')
+        .trim();
+    }
+
+    // Helper: Intelligent Low-Quality & Meaningless Content Detection
+    function isLowQualityContent(text) {
+      if (!text || typeof text !== 'string') return true;
+      const trimmed = text.trim();
+      if (!trimmed) return true;
+
+      const lower = trimmed.toLowerCase();
+
+      // 1. Check for random keyboard mashing patterns
+      const keyboardPatterns = [
+        'asdf', 'qwerty', 'zxcv', 'qwer', 'asdfgh', 'jkl;', 'uiop',
+        'ghjk', 'vbnm', '12345', '123456', '0000', '1111'
+      ];
+      if (keyboardPatterns.some(pat => lower === pat || lower === pat + pat)) {
+        return true;
+      }
+
+      // 2. Check for only numbers
+      if (/^\d+$/.test(trimmed)) return true;
+
+      // 3. Check for only symbols/punctuation
+      if (/^[^\w\s]+$/.test(trimmed)) return true;
+
+      // 4. Check for only emojis
+      if (/^(\p{Extended_Pictographic}|\s)+$/u.test(trimmed)) return true;
+
+      // 5. Check for repeated single character (e.g., 'aaaaaaaaaa' or > 70% same char in longer strings)
+      if (trimmed.length >= 5) {
+        const charCounts = {};
+        for (let char of lower.replace(/\s/g, '')) {
+          charCounts[char] = (charCounts[char] || 0) + 1;
+        }
+        const maxCharCount = Math.max(...Object.values(charCounts));
+        const totalChars = lower.replace(/\s/g, '').length;
+        if (totalChars > 0 && (maxCharCount / totalChars) > 0.70) {
+          return true;
+        }
+      }
+
+      // 6. Check for repeated words (e.g., 'test test test', 'hello hello hello')
+      const words = lower.split(/\s+/).filter(Boolean);
+      if (words.length >= 3 && new Set(words).size === 1) {
+        return true;
+      }
+
+      // 7. Check for very low information (fewer than 3 distinct alphabetic letters)
+      const distinctLetters = new Set(lower.replace(/[^a-z]/g, '')).size;
+      if (distinctLetters < 3) {
+        return true;
+      }
+
+      return false;
+    }
+
+    // Cooldown Timer for Spam Prevention
+    const COOLDOWN_SECONDS = 45;
+    const LAST_SUBMIT_KEY = 'EMAILJS_LAST_SUBMIT_TIME';
+
+    function isCooldownActive() {
+      const lastSubmit = sessionStorage.getItem(LAST_SUBMIT_KEY);
+      if (!lastSubmit) return false;
+      const elapsed = (Date.now() - parseInt(lastSubmit, 10)) / 1000;
+      return elapsed < COOLDOWN_SECONDS;
+    }
+
+    function startCooldown() {
+      sessionStorage.setItem(LAST_SUBMIT_KEY, Date.now().toString());
+    }
+
+    // Helper to set field error
+    function setFieldError(inputEl, errorId, errorText) {
+      if (!inputEl) return;
+      const errorEl = document.getElementById(errorId);
+      if (errorText) {
+        inputEl.classList.add('input-error');
+        inputEl.setAttribute('aria-invalid', 'true');
+        if (errorEl) errorEl.textContent = errorText;
+      } else {
+        inputEl.classList.remove('input-error');
+        inputEl.setAttribute('aria-invalid', 'false');
+        if (errorEl) errorEl.textContent = '';
+      }
+    }
+
+    // Real-time validation clearing on input
+    const fields = [
+      { input: nameInput, errId: 'nameError' },
+      { input: emailInput, errId: 'emailError' },
+      { input: subjectInput, errId: 'subjectError' },
+      { input: messageInput, errId: 'messageError' }
+    ];
+
+    fields.forEach(({ input, errId }) => {
+      if (input) {
+        input.addEventListener('input', () => {
+          if (input.classList.contains('input-error')) {
+            validateField(input, errId);
+          }
+        });
+      }
+    });
+
+    function validateField(inputEl, errorId) {
+      if (!inputEl) return false;
+      const val = inputEl.value.trim();
+      const nameAttr = inputEl.getAttribute('name');
+
+      if (nameAttr === 'name') {
+        if (!val) {
+          setFieldError(inputEl, errorId, 'Please enter your name.');
+          return false;
+        }
+        if (val.length < 2) {
+          setFieldError(inputEl, errorId, 'Name must be at least 2 characters long.');
+          return false;
+        }
+        if (val.length > 50) {
+          setFieldError(inputEl, errorId, 'Name cannot exceed 50 characters.');
+          return false;
+        }
+        if (/^[^a-zA-Z]+$/.test(val)) {
+          setFieldError(inputEl, errorId, 'Name must contain letters.');
+          return false;
+        }
+        setFieldError(inputEl, errorId, '');
+        return true;
+      }
+
+      if (nameAttr === 'email') {
+        if (!val) {
+          setFieldError(inputEl, errorId, 'Please enter your email address.');
+          return false;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(val)) {
+          setFieldError(inputEl, errorId, 'Please enter a valid email address.');
+          return false;
+        }
+        setFieldError(inputEl, errorId, '');
+        return true;
+      }
+
+      if (nameAttr === 'subject') {
+        if (!val) {
+          setFieldError(inputEl, errorId, 'Please enter a subject.');
+          return false;
+        }
+        if (val.length < 5) {
+          setFieldError(inputEl, errorId, 'Subject must be at least 5 characters long.');
+          return false;
+        }
+        if (val.length > 100) {
+          setFieldError(inputEl, errorId, 'Subject cannot exceed 100 characters.');
+          return false;
+        }
+        if (isLowQualityContent(val)) {
+          setFieldError(inputEl, errorId, 'Please enter a meaningful subject.');
+          return false;
+        }
+        setFieldError(inputEl, errorId, '');
+        return true;
+      }
+
+      if (nameAttr === 'message') {
+        if (!val) {
+          setFieldError(inputEl, errorId, 'Please enter your message.');
+          return false;
+        }
+        if (val.length < 20) {
+          setFieldError(inputEl, errorId, 'Message must be at least 20 characters long.');
+          return false;
+        }
+        if (val.length > 1000) {
+          setFieldError(inputEl, errorId, 'Message cannot exceed 1000 characters.');
+          return false;
+        }
+        if (isLowQualityContent(val)) {
+          setFieldError(inputEl, errorId, 'Please enter a meaningful message without spam or filler.');
+          return false;
+        }
+        setFieldError(inputEl, errorId, '');
+        return true;
+      }
+
+      return true;
+    }
+
+    function validateForm() {
+      const isNameValid = validateField(nameInput, 'nameError');
+      const isEmailValid = validateField(emailInput, 'emailError');
+      const isSubjectValid = validateField(subjectInput, 'subjectError');
+      const isMessageValid = validateField(messageInput, 'messageError');
+      return isNameValid && isEmailValid && isSubjectValid && isMessageValid;
+    }
+
+    contactForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // 1. Spam protection honeypot check
+      if (botCheckInput && botCheckInput.value.trim() !== '') {
+        // Silently ignore submission if honeypot is filled
+        return;
+      }
+
+      // 2. Client-side cooldown timer check (30-60 seconds)
+      if (isCooldownActive()) {
+        showToast(`Please wait ${COOLDOWN_SECONDS} seconds before sending another message to prevent spam.`, 'error');
+        return;
+      }
+
+      // 3. Client-side field validation
+      if (!validateForm()) {
+        return;
+      }
+
+      // 4. Prevent duplicate submissions
+      if (isSubmitting) return;
+      isSubmitting = true;
+
+      // 5. Show loading state
+      const originalBtnText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> SENDING...';
+
+      // 6. Sanitize user inputs to prevent HTML/JS injection or formatting issues
+      const cleanName = sanitizeInput(nameInput ? nameInput.value : '');
+      const cleanEmail = sanitizeInput(emailInput ? emailInput.value : '');
+      const cleanSubject = sanitizeInput(subjectInput ? subjectInput.value : '');
+      const cleanMessage = sanitizeInput(messageInput ? messageInput.value : '');
+
+      // 7. Build parameters supporting standard EmailJS template variable names
+      const templateParams = {
+        name: cleanName,
+        from_name: cleanName,
+        email: cleanEmail,
+        from_email: cleanEmail,
+        subject: cleanSubject,
+        message: cleanMessage
+      };
+
+      try {
+        if (typeof emailjs === 'undefined') {
+          throw new Error('EmailJS SDK not loaded.');
+        }
+
+        const config = await getEmailJSConfig();
+        if (!config.SERVICE_ID || !config.TEMPLATE_ID || !config.PUBLIC_KEY) {
+          throw new Error('Please configure your EmailJS environment variables (EMAILJS_PUBLIC_KEY, EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID).');
+        }
+
+        await emailjs.send(
+          config.SERVICE_ID,
+          config.TEMPLATE_ID,
+          templateParams,
+          config.PUBLIC_KEY
+        );
+
+        // Start spam cooldown timer
+        startCooldown();
+
+        // Success handling
+        showToast('Message sent successfully! Thank you for reaching out. I\'ll get back to you as soon as possible.', 'success');
         contactForm.reset();
-      });
+        fields.forEach(({ input, errId }) => setFieldError(input, errId, ''));
+      } catch (err) {
+        console.error('EmailJS Send Error:', err);
+        const errorMsg = 'Failed to send message. Please try again later or email me directly at sujal.vk888@gmail.com.';
+        showToast(errorMsg, 'error');
+      } finally {
+        isSubmitting = false;
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+      }
+    });
   }
 });
