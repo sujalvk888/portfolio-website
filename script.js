@@ -393,14 +393,52 @@ document.addEventListener("DOMContentLoaded", () => {
     function sanitizeInput(text) {
       if (!text || typeof text !== 'string') return '';
       return text
+        .replace(/[\x00-\x1F\x7F-\x9F]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#x27;')
-        .replace(/\//g, '&#x2F;')
-        .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '')
-        .trim();
+        .replace(/\//g, '&#x2F;');
+    }
+
+    // Helper: Detect obvious keyboard mashing patterns
+    function isKeyboardPattern(text) {
+      if (!text || typeof text !== 'string') return false;
+      const lower = text.trim().toLowerCase();
+      const keyboardPatterns = [
+        'asdf', 'qwerty', 'zxcv', 'qwer', 'asdfgh', 'jkl;', 'uiop',
+        'ghjk', 'vbnm', '12345', '123456', '0000', '1111'
+      ];
+      return keyboardPatterns.some(pat => lower === pat || lower === pat + pat || lower.includes(pat + pat));
+    }
+
+    // Helper: Detect repeated single characters (e.g., 'aaaaaaaaaa', '@@@@@@', '111111')
+    function hasRepeatedCharacters(text) {
+      if (!text || typeof text !== 'string') return false;
+      const trimmed = text.trim().toLowerCase();
+      // Check for 5+ identical consecutive characters (e.g. 'aaaaa', '@@@@@', '11111')
+      if (/(.)\1{4,}/.test(trimmed)) return true;
+      // Check for single-character dominance in short/medium strings (e.g., 'aaaaaaa')
+      const noSpace = trimmed.replace(/\s/g, '');
+      if (noSpace.length >= 5) {
+        const charCounts = {};
+        for (let char of noSpace) {
+          charCounts[char] = (charCounts[char] || 0) + 1;
+        }
+        const maxCount = Math.max(...Object.values(charCounts));
+        if (maxCount / noSpace.length > 0.70) return true;
+      }
+      return false;
+    }
+
+    // Helper: Detect repeated words (e.g., 'test test test')
+    function hasRepeatedWords(text) {
+      if (!text || typeof text !== 'string') return false;
+      const words = text.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      return words.length >= 3 && new Set(words).size === 1;
     }
 
     // Helper: Intelligent Low-Quality & Meaningless Content Detection
@@ -409,50 +447,21 @@ document.addEventListener("DOMContentLoaded", () => {
       const trimmed = text.trim();
       if (!trimmed) return true;
 
-      const lower = trimmed.toLowerCase();
-
-      // 1. Check for random keyboard mashing patterns
-      const keyboardPatterns = [
-        'asdf', 'qwerty', 'zxcv', 'qwer', 'asdfgh', 'jkl;', 'uiop',
-        'ghjk', 'vbnm', '12345', '123456', '0000', '1111'
-      ];
-      if (keyboardPatterns.some(pat => lower === pat || lower === pat + pat)) {
-        return true;
-      }
-
-      // 2. Check for only numbers
+      // 1. Check keyboard patterns
+      if (isKeyboardPattern(trimmed)) return true;
+      // 2. Check repeated characters
+      if (hasRepeatedCharacters(trimmed)) return true;
+      // 3. Check repeated words
+      if (hasRepeatedWords(trimmed)) return true;
+      // 4. Check only numbers
       if (/^\d+$/.test(trimmed)) return true;
-
-      // 3. Check for only symbols/punctuation
+      // 5. Check only symbols/punctuation
       if (/^[^\w\s]+$/.test(trimmed)) return true;
-
-      // 4. Check for only emojis
+      // 6. Check only emojis
       if (/^(\p{Extended_Pictographic}|\s)+$/u.test(trimmed)) return true;
-
-      // 5. Check for repeated single character (e.g., 'aaaaaaaaaa' or > 70% same char in longer strings)
-      if (trimmed.length >= 5) {
-        const charCounts = {};
-        for (let char of lower.replace(/\s/g, '')) {
-          charCounts[char] = (charCounts[char] || 0) + 1;
-        }
-        const maxCharCount = Math.max(...Object.values(charCounts));
-        const totalChars = lower.replace(/\s/g, '').length;
-        if (totalChars > 0 && (maxCharCount / totalChars) > 0.70) {
-          return true;
-        }
-      }
-
-      // 6. Check for repeated words (e.g., 'test test test', 'hello hello hello')
-      const words = lower.split(/\s+/).filter(Boolean);
-      if (words.length >= 3 && new Set(words).size === 1) {
-        return true;
-      }
-
-      // 7. Check for very low information (fewer than 3 distinct alphabetic letters)
-      const distinctLetters = new Set(lower.replace(/[^a-z]/g, '')).size;
-      if (distinctLetters < 3) {
-        return true;
-      }
+      // 7. Check low alphabetic letter count
+      const distinctLetters = new Set(trimmed.toLowerCase().replace(/[^a-z]/g, '')).size;
+      if (distinctLetters < 3) return true;
 
       return false;
     }
@@ -502,29 +511,37 @@ document.addEventListener("DOMContentLoaded", () => {
             validateField(input, errId);
           }
         });
+        input.addEventListener('blur', () => {
+          validateField(input, errId);
+        });
       }
     });
 
     function validateField(inputEl, errorId) {
       if (!inputEl) return false;
-      const val = inputEl.value.trim();
+      // Clean leading/trailing and multiple consecutive spaces for validation
+      const val = inputEl.value.trim().replace(/\s+/g, ' ');
       const nameAttr = inputEl.getAttribute('name');
 
       if (nameAttr === 'name') {
-        if (!val) {
-          setFieldError(inputEl, errorId, 'Please enter your name.');
-          return false;
-        }
-        if (val.length < 2) {
-          setFieldError(inputEl, errorId, 'Name must be at least 2 characters long.');
+        if (!val || val.length < 2) {
+          setFieldError(inputEl, errorId, 'Please enter your full name.');
           return false;
         }
         if (val.length > 50) {
           setFieldError(inputEl, errorId, 'Name cannot exceed 50 characters.');
           return false;
         }
-        if (/^[^a-zA-Z]+$/.test(val)) {
-          setFieldError(inputEl, errorId, 'Name must contain letters.');
+        if (/\d/.test(val)) {
+          setFieldError(inputEl, errorId, 'Name cannot contain numbers.');
+          return false;
+        }
+        if (!/^[a-zA-Z\s\-']+$/.test(val)) {
+          setFieldError(inputEl, errorId, 'Name cannot contain numbers or special characters.');
+          return false;
+        }
+        if (isKeyboardPattern(val) || hasRepeatedCharacters(val)) {
+          setFieldError(inputEl, errorId, 'Please avoid random or repeated characters.');
           return false;
         }
         setFieldError(inputEl, errorId, '');
@@ -546,20 +563,24 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (nameAttr === 'subject') {
-        if (!val) {
-          setFieldError(inputEl, errorId, 'Please enter a subject.');
-          return false;
-        }
-        if (val.length < 5) {
-          setFieldError(inputEl, errorId, 'Subject must be at least 5 characters long.');
+        if (!val || val.length < 5) {
+          setFieldError(inputEl, errorId, 'Please enter a valid subject.');
           return false;
         }
         if (val.length > 100) {
           setFieldError(inputEl, errorId, 'Subject cannot exceed 100 characters.');
           return false;
         }
+        if (/^\d+$/.test(val) || /^[^\w\s]+$/.test(val)) {
+          setFieldError(inputEl, errorId, 'Please enter a valid subject.');
+          return false;
+        }
+        if (isKeyboardPattern(val) || hasRepeatedCharacters(val) || hasRepeatedWords(val)) {
+          setFieldError(inputEl, errorId, 'Please avoid random or repeated characters.');
+          return false;
+        }
         if (isLowQualityContent(val)) {
-          setFieldError(inputEl, errorId, 'Please enter a meaningful subject.');
+          setFieldError(inputEl, errorId, 'Please enter a valid subject.');
           return false;
         }
         setFieldError(inputEl, errorId, '');
@@ -567,20 +588,24 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (nameAttr === 'message') {
-        if (!val) {
-          setFieldError(inputEl, errorId, 'Please enter your message.');
-          return false;
-        }
-        if (val.length < 20) {
-          setFieldError(inputEl, errorId, 'Message must be at least 20 characters long.');
+        if (!val || val.length < 20) {
+          setFieldError(inputEl, errorId, 'Message must be at least 20 meaningful characters.');
           return false;
         }
         if (val.length > 1000) {
           setFieldError(inputEl, errorId, 'Message cannot exceed 1000 characters.');
           return false;
         }
+        if (/^\d+$/.test(val) || /^[^\w\s]+$/.test(val) || /^(\p{Extended_Pictographic}|\s)+$/u.test(val)) {
+          setFieldError(inputEl, errorId, 'Message must contain at least 20 meaningful characters.');
+          return false;
+        }
+        if (isKeyboardPattern(val) || hasRepeatedCharacters(val) || hasRepeatedWords(val)) {
+          setFieldError(inputEl, errorId, 'Please avoid random or repeated characters.');
+          return false;
+        }
         if (isLowQualityContent(val)) {
-          setFieldError(inputEl, errorId, 'Please enter a meaningful message without spam or filler.');
+          setFieldError(inputEl, errorId, 'Message must contain at least 20 meaningful characters.');
           return false;
         }
         setFieldError(inputEl, errorId, '');
@@ -595,6 +620,19 @@ document.addEventListener("DOMContentLoaded", () => {
       const isEmailValid = validateField(emailInput, 'emailError');
       const isSubjectValid = validateField(subjectInput, 'subjectError');
       const isMessageValid = validateField(messageInput, 'messageError');
+
+      // Auto-focus first invalid field while preserving all entered values
+      const firstInvalid = [
+        { el: nameInput, valid: isNameValid },
+        { el: emailInput, valid: isEmailValid },
+        { el: subjectInput, valid: isSubjectValid },
+        { el: messageInput, valid: isMessageValid }
+      ].find(item => !item.valid);
+
+      if (firstInvalid && firstInvalid.el && typeof firstInvalid.el.focus === 'function') {
+        firstInvalid.el.focus();
+      }
+
       return isNameValid && isEmailValid && isSubjectValid && isMessageValid;
     }
 
