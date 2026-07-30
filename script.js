@@ -640,19 +640,23 @@ document.addEventListener("DOMContentLoaded", () => {
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> SENDING...';
 
       // 6. Sanitize user inputs to prevent HTML/JS injection or formatting issues
-      const cleanName = sanitizeInput(nameInput ? nameInput.value : '');
-      const cleanEmail = sanitizeInput(emailInput ? emailInput.value : '');
+      const cleanName    = sanitizeInput(nameInput    ? nameInput.value    : '');
+      const cleanEmail   = sanitizeInput(emailInput   ? emailInput.value   : '');
       const cleanSubject = sanitizeInput(subjectInput ? subjectInput.value : '');
       const cleanMessage = sanitizeInput(messageInput ? messageInput.value : '');
 
-      // 7. Build parameters supporting standard EmailJS template variable names
+      // 7. Derive avatar initial from first character of the name (e.g. "Sarah Johnson" → "S")
+      const initial = cleanName.trim().charAt(0).toUpperCase() || '?';
+
+      // 8. Build parameters supporting standard EmailJS template variable names
       const templateParams = {
-        name: cleanName,
-        from_name: cleanName,
-        email: cleanEmail,
+        name:       cleanName,
+        from_name:  cleanName,
+        email:      cleanEmail,
         from_email: cleanEmail,
-        subject: cleanSubject,
-        message: cleanMessage
+        subject:    cleanSubject,
+        message:    cleanMessage,
+        initial:    initial
       };
 
       try {
