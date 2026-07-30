@@ -19,7 +19,7 @@
 
 ## ✨ Live Preview
 
-> **🔗 [https://sujalvk.vercel.app](https://sujal-portfolio-sigmaverse.vercel.app)**
+> **🔗 [https://sujal-portfolio-sigmaverse.vercel.app](https://sujal-portfolio-sigmaverse.vercel.app)**
 
 ---
 
